@@ -1,93 +1,81 @@
-<template>
-	<table>
-		<thead>
-			<tr>
-				<th v-for="(row, index) in data.head" contenteditable="true">
-					{{ row }}
-				</th>
-			</tr>
-			<tr v-for="(row, y) in data.rows" :key="y">
-				<td
-					contenteditable="true"
-					@keydown="($event) => onKeyupHandler(cell, y, x, $event)"
-					:key="x"
-					v-for="(cell, x) in row"
-				>
-					{{ cell }}
-				</td>
-				<button @click="addRows(y)">+</button>
-			</tr>
-		</thead>
-	</table>
-	<pre>
-
-    <code>
-  {{ JSON.stringify(data,null,4) }}      
-    </code>
-  </pre>
-</template>
-
 <script lang="ts" setup>
 	import { ref } from 'vue'
-	const data = ref({
-		head: ['姓名', '年龄'],
-		rows: [
-			['111', '2'],
-			['1', '21'],
-			['11', '211'],
-			['111', '2112'],
-			[1, '211222']
-		]
-	})
+	const tableSize = [5, 4]
+	const rows = ref(
+		Array.apply(null, { length: tableSize[0] }).map((_, i) =>
+			Array.apply(null, { length: tableSize[1] }).map((_, j) => {
+				return { text: i * tableSize[1] + j + 1, class: [] }
+			})
+		)
+	)
+
 	function onKeyupHandler(row, y, x, e) {
 		console.log(row, x, y, e)
 		const text = e.target.innerText
-		data.value.rows[y][x] = text
+		// data.value.rows[y][x] = text
 		// 删除
 		// if (e.key === 'Backspace' && !text.length) {
 		// 	// data.value.rows[y].splice(x, 1)
 		// }
 	}
 	function addRows(y) {
-		data.value.rows.splice(y + 1, 0, ['', ''])
+		// data.value.rows.splice(y + 1, 0, ['', ''])
 	}
 </script>
+<template>
+	<div class="table">
+		<div class="table-rows" v-for="row in rows">
+			<div class="table-cell" v-for="cell in row" contenteditable="true">
+				{{ cell.text }}
+			</div>
+			<div class="resize-cell"></div>
+		</div>
+	</div>
+	<pre>
 
-<style>
-	table {
-		border-collapse: collapse;
-	}
-	table,
-	th,
-	td {
-		border: 1px solid #000;
-	}
-	th,
-	td {
-		padding: 5px 10px;
-	}
-	tr {
-		position: relative;
-	}
-	tr:hover {
-		border-bottom: 3px solid #f90;
-	}
-	tr:hover button {
-		display: inline-block;
-	}
-	code {
+    <code>
+  {{ JSON.stringify(rows,null,4) }}      
+    </code>
+  </pre>
+</template>
+
+<style lang="less">
+	.table {
+		display: flex;
+		flex-direction: column;
 		width: 100%;
-		display: block;
-		text-align: left;
-	}
-	button {
-		display: none;
-		position: absolute;
-		background: none;
-		border: none;
-		outline: none;
-		padding: 4px;
-		bottom: -50%;
-		background: #f1f1f1;
+		height: 100%;
+		.table-rows {
+			&:first-child {
+				border-top: 1px solid #f1f1f1;
+			}
+			border-bottom: 1px solid #f1f1f1;
+			display: flex;
+			flex-direction: row;
+			width: 100%;
+			height: 100%;
+			position: relative;
+			.resize-x {
+				width: 100%;
+				height: 3px;
+				background: #f90;
+				position: absolute;
+			}
+			.table-cell {
+				&:first-child {
+					border-left: 1px solid #f1f1f1;
+				}
+				display: flex;
+				border-right: 1px solid #f1f1f1;
+				flex-direction: column;
+				width: 100%;
+				height: 100%;
+				padding: 7px 15px;
+				cursor: edit;
+				&:hover {
+					background: #e2e2e2;
+				}
+			}
+		}
 	}
 </style>
