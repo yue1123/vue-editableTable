@@ -8,12 +8,11 @@
 		text: '',
 		class: []
 	}
+	const widths = ref<number[]>(genArrayLength(tableSize[1], 0))
 	const rows = ref(genArrayLength(tableSize[0], genArrayLength(tableSize[1], itemData)))
 	onMounted(() => {
-		//  console.log(table);
-		//  console.log();
 		width.value = table.value.offsetWidth
-		preWidth.value = table.value.offsetWidth / tableSize[1]
+		preWidth.value = width.value / tableSize[1]
 	})
 	function deepClone(obj) {
 		return JSON.parse(JSON.stringify(obj))
@@ -30,9 +29,51 @@
 	function handleAddRows(rowIndex: number) {
 		rows.value.splice(rowIndex + 1, 0, genArrayLength(tableSize[1], deepClone(itemData)))
 	}
+
+	// resize
+	let startPoint: { x: number } = null
+	let isMouseDown = false
+	let currentIndex = undefined
+	function handleResizeStart(event: MouseEvent, index): void {
+		// console.log(event)
+		isMouseDown = true
+		currentIndex = index
+		startPoint = {
+			x: event.clientX - (event.target as any).offsetLeft
+		}
+    console.log((event.target as any).offsetLeft);
+	}
+	function handleResizeEnd(event): void {
+		isMouseDown = false
+		startPoint = null
+		console.log('end', event)
+	}
+	function handleResize(event: MouseEvent) {
+		// console.log('1111', isMouseDown, startPoint, isMouseDown && startPoint)
+		if (!isMouseDown && !startPoint) return
+		const { clientX } = event
+		// console.log(clientX - startPoint.x)
+		let resizeValue = clientX - startPoint.x
+		if (resizeValue < 0) {
+			widths.value[currentIndex] -= resizeValue
+			widths.value[currentIndex + 1] += resizeValue
+		} else {
+			widths.value[currentIndex] += resizeValue
+			widths.value[currentIndex - 1] -= resizeValue
+			// resizeValue = Math.floor(resizeValue / preWidth.value)
+		}
+		console.log(widths.value)
+		console.log('currentIndex', currentIndex)
+	}
 </script>
 <template>
-	<div class="table" ref="table">
+	<div
+		class="table"
+		ref="table"
+		@mousemove="($event) => handleResize($event)"
+		@mouseup="handleResizeEnd"
+		@mouseout.self="handleResizeEnd"
+	>
 		<div class="table-rows" v-for="(row, rowIndex) in rows">
 			<div
 				class="table-cell"
@@ -49,9 +90,10 @@
 			<!-- <button class="select-rows"></button> -->
 		</div>
 		<div
+			v-for="(_, index) in tableSize[1]"
+			:style="{ left: `${preWidth * (index + 1) + widths[index]}px` }"
 			class="resize-bar"
-			v-for="(item, index) in tableSize[1]"
-			:style="{ left: `${preWidth * (index + 1)}px` }"
+			@mousedown="($event) => handleResizeStart($event, index)"
 		>
 			<div class="table-cell-line"></div>
 		</div>
@@ -128,17 +170,23 @@
 		.resize-bar {
 			position: absolute;
 			height: 100%;
-			width: 6px;
+			width: 10px;
 			transition: background 0.4s;
 			background: transparent;
 			cursor: col-resize;
+			transform: translateX(-50%);
 			&:hover {
 				background: #f90;
+				.table-cell-line {
+					opacity: 0;
+				}
 			}
 			.table-cell-line {
 				height: 100%;
 				width: 1px;
 				background: #ccc;
+				position: relative;
+				margin-left: 5px;
 			}
 		}
 	}
