@@ -35,50 +35,67 @@
 	let isMouseDown = false
 	let currentIndex = undefined
 	function handleResizeStart(event: MouseEvent, index): void {
-		// console.log(event)
+		console.log(event, 'start')
+		// while (resizeEl && resizeEl.className !== 'resize-bar') {
+		// 	resizeEl = event.path.pop()
+		// 	console.log(123)
+		// }
+		let resizeEl = ((event as any).path as Element[]).find(
+			(el) => el.className === 'resize-bar'
+		)
+		console.log(event)
+		if (!resizeEl) {
+			return
+		}
+		startPoint = {
+			x: event.clientX
+		}
 		isMouseDown = true
 		currentIndex = index
-		startPoint = {
-			x: event.clientX - (event.target as any).offsetLeft
-		}
-    console.log((event.target as any).offsetLeft);
+		console.log(startPoint)
+		// console.log((event.target as any).offsetLeft)
 	}
 	function handleResizeEnd(event): void {
+		console.log('鼠标抬起')
 		isMouseDown = false
 		startPoint = null
-		console.log('end', event)
+		// console.log('end', event)
 	}
 	function handleResize(event: MouseEvent) {
 		// console.log('1111', isMouseDown, startPoint, isMouseDown && startPoint)
-		if (!isMouseDown && !startPoint) return
-		const { clientX } = event
-		// console.log(clientX - startPoint.x)
-		let resizeValue = clientX - startPoint.x
-		if (resizeValue < 0) {
-			widths.value[currentIndex] -= resizeValue
-			widths.value[currentIndex + 1] += resizeValue
-		} else {
-			widths.value[currentIndex] += resizeValue
-			widths.value[currentIndex - 1] -= resizeValue
-			// resizeValue = Math.floor(resizeValue / preWidth.value)
+		// console.log(event)
+		// console.log(isMouseDown, startPoint)
+		if (isMouseDown && startPoint) {
+			const { clientX } = event
+			// console.log(clientX - startPoint.x)
+			let resizeValue = clientX - startPoint.x
+			console.log(resizeValue)
+			if (resizeValue < 0) {
+				widths.value[currentIndex] = resizeValue
+				// widths.value[currentIndex + 1] += resizeValue
+			} else {
+				widths.value[currentIndex] = resizeValue
+				// widths.value[currentIndex - 1] -= resizeValue
+				// resizeValue = Math.floor(resizeValue / preWidth.value)
+			}
+			console.log(widths.value)
+			console.log('currentIndex', currentIndex)
 		}
-		console.log(widths.value)
-		console.log('currentIndex', currentIndex)
 	}
 </script>
 <template>
 	<div
 		class="table"
 		ref="table"
-		@mousemove="($event) => handleResize($event)"
+		@mousemove="handleResize"
 		@mouseup="handleResizeEnd"
-		@mouseout.self="handleResizeEnd"
+		@mouseout="handleResizeEnd"
 	>
 		<div class="table-rows" v-for="(row, rowIndex) in rows">
 			<div
 				class="table-cell"
 				v-for="(cell, cellIndex) in row"
-				:style="{ width: `${preWidth}px` }"
+				:style="{ width: `${preWidth + widths[cellIndex]}px` }"
 				@keyup="($event) => onKeyupHandler(rowIndex, cellIndex, $event)"
 				contenteditable="true"
 			>
@@ -93,6 +110,11 @@
 			v-for="(_, index) in tableSize[1]"
 			:style="{ left: `${preWidth * (index + 1) + widths[index]}px` }"
 			class="resize-bar"
+			@mouseout="
+				($event) => {
+					$event.stopPropagation()
+				}
+			"
 			@mousedown="($event) => handleResizeStart($event, index)"
 		>
 			<div class="table-cell-line"></div>
